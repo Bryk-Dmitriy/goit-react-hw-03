@@ -1,61 +1,44 @@
-import './App.css'
-import { Product } from './Product';
-import { Mailbox } from './Product';
-import { BookList } from './Product';
-import { favouriteBooks } from './Collections';
-import { Card } from './Product';
-import { Alert } from "./Alert";
-import { AlertVanilla } from './Alert';
-import { UserMenu } from './Alert';
-import { Listener } from './Listener';
-import { Reactivity } from './Reactivity';
-import { ComponentLifecycle } from './ComponentLifecycle';
+import { useState, useEffect} from "react";
+import { nanoid } from "nanoid";
+import contactsData from "./contactsData";
+import ContactForm from './ContactForm';
+import ContactList from './ContactList';
+import SearchBox from './SearchBox';
 
 export default function App() {
+
+  const [contacts, setContacts] = useState(() => {
+    const localeContacts = localStorage.getItem('contacts');
+    return localeContacts ? JSON.parse(localeContacts): contactsData;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+}, [contacts]);
+
+
+  const [filter, setFilter] = useState("");
+
+  const filteredUsers = contacts.filter(person =>
+    person.name.toLowerCase().includes(filter.toLowerCase().trim())
+  );
+
+  const addContact = (name, number) => {
+    const newContact = { id: nanoid(), name, number };
+    setContacts(prevContacts => [...prevContacts, newContact]);
+  };
+
+  const onDeleteContact = (contactId) => {
+    const updateContact = contacts.filter(contact => contact.id !== contactId)
+    setContacts(updateContact)
+  };
+
   return (
     <div>
-      <h1>Best selling</h1>
-
-     <Product
-        name="Tacos With Lime"
-        imgUrl="https://images.pexels.com/photos/461198/pexels-photo-461198.jpeg?dpr=2&h=480&w=640"
-        price={10.99}
-      />
-      <Product
-        name="Fries and Burger"
-        imgUrl="https://images.pexels.com/photos/70497/pexels-photo-70497.jpeg?dpr=2&h=480&w=640"
-        price={14.29}
-      />
-      <Mailbox
-        name="Mango"
-        unreadMessages={2}
-      />
-      <h1>Books of the week</h1>
-      <BookList books={favouriteBooks} />
-      <Card cardText="Lorem">
-	      <h1>Card title</h1>
-        <p>Text between opening and closing tag</p>
-        <p></p>
-      </Card>
-      <>
-      <Alert variant="info" outlined>
-        Would you like to browse our recommended products?
-      </Alert>
-      <Alert variant="error">
-        There was an error during your last transaction
-      </Alert>
-      <Alert variant="success" elevated>
-        Payment received, thank you for your purchase
-      </Alert>
-      <Alert variant="warning">
-        Please update your profile contact information
-      </Alert>
-      <AlertVanilla>Lorem</AlertVanilla>
-      <UserMenu name='Mango'></UserMenu>
-    </>
-      <Listener/>
-      <Reactivity/>
-      <ComponentLifecycle/>
+      <h1>Phonebook</h1>
+      <ContactForm addContact={addContact}/>
+      <SearchBox setFilter={setFilter}/>
+      <ContactList contacts={filteredUsers} onDeleteContact={onDeleteContact}/>
     </div>
   );
-}
+};
